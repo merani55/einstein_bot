@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-TOKEN = "ТВОЙ_ТОКЕН_ТУТ"
+TOKEN = "7222439087:AAF4nAy9vsmr9TkIsVqojFnk8oevXJSKL-s"
 
 # Структура квесту: кожна точка — це dict з завданням, правильною відповіддю і підказкою
 QUEST_POINTS = [
