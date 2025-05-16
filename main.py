@@ -104,60 +104,39 @@ QUEST_POINTS = [
 ]
 
 class QuestBot:
-    def __init__(self):
-        self.current_point = 0
-        self.showing_hint = False
-
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        self.current_point = 0
-        self.showing_hint = False
+        context.user_data['current_point'] = 0
+        context.user_data['showing_hint'] = False
         await update.message.reply_text(
-            "Вітаю у квесті 'Код Ейнштейна'!\n\n" + QUEST_POINTS[self.current_point]["text"] + "\n\n"
+            "Вітаю у квесті 'Код Ейнштейна'!\n\n" + QUEST_POINTS[0]["text"] + "\n\n"
             "Відповідайте на завдання або напишіть /hint для підказки."
         )
 
     async def hint(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if self.showing_hint:
+        if context.user_data.get('showing_hint', False):
             await update.message.reply_text("Підказка вже показана.")
         else:
-            self.showing_hint = True
-            await update.message.reply_text(QUEST_POINTS[self.current_point]["hint"])
+            context.user_data['showing_hint'] = True
+            current_point = context.user_data.get('current_point', 0)
+            await update.message.reply_text(QUEST_POINTS[current_point]["hint"])
 
     async def handle_answer(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        current_point = context.user_data.get('current_point', 0)
         user_answer = update.message.text.lower().strip()
-        correct_answer = QUEST_POINTS[self.current_point]["answer"].lower()
+        correct_answer = QUEST_POINTS[current_point]["answer"].lower()
+
+        # Очистка для порівняння (букви і пробіли)
         user_answer_clean = ''.join(c for c in user_answer if c.isalnum() or c.isspace())
         correct_answer_clean = ''.join(c for c in correct_answer if c.isalnum() or c.isspace())
 
-        print(f"[DEBUG] Current point: {self.current_point}, User answer: '{user_answer_clean}', Correct answer: '{correct_answer_clean}'")
-
         if user_answer_clean == correct_answer_clean:
             await update.message.reply_text("✅ Вірно! Переходимо до наступної точки.")
-            self.current_point += 1
-            self.showing_hint = False
-
-            if self.current_point < len(QUEST_POINTS):
-                await update.message.reply_text(QUEST_POINTS[self.current_point]["text"])
+            current_point += 1
+            context.user_data['current_point'] = current_point
+            context.user_data['showing_hint'] = False
+            if current_point < len(QUEST_POINTS):
+                await update.message.reply_text(QUEST_POINTS[current_point]["text"])
             else:
-                print("[DEBUG] Квест завершено!")
-                await update.message.reply_text(
-                    "🎉 Вітаємо! Ви завершили квест «Код Ейнштейна».\n\n"
-                    "Ви відкрили не просто відповіді — ви відчули дух пошуку, "
-                    "де кожна загадка — це крок до розуміння глибин світу і себе.\n"
-                    "Як колись Ейнштейн казав, «Уява важливіша за знання», "
-                    "і саме уява веде нас за межі очевидного.\n\n"
-                    "Нехай цей шлях надихає вас не боятись питати, шукати і відкривати нове — "
-                    "адже справжня мудрість починається там, де закінчується звичне."
-                )
-        else:
-            await update.message.reply_text("❌ Невірно. Спробуй ще раз або напиши /hint.")
+                await update.message.reply
 
-quest = QuestBot()
-app = ApplicationBuilder().token(os.getenv("BOT_TOKEN")).build()
-app.add_handler(CommandHandler("start", quest.start))
-app.add_handler(CommandHandler("hint", quest.hint))
-app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), quest.handle_answer))
-
-if __name__ == "__main__":
-    app.run_polling()
 
