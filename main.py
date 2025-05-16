@@ -1,4 +1,6 @@
 import logging
+import json
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
@@ -24,7 +26,7 @@ QUEST = [
     },
     {
         "title": "Точка 3 — Адреса генія",
-        "text": "«Будинок, у якому думки вперше набували форми...",
+        "text": "«Будинок, у якому думки вперше набували форми...\"",
         "question": "Місце, де юний Ейнштейн жив зі своєю родиною, зберігає спокій і сьогодні. Його адреса має число, подільне на 3, 6 і 9. Назва вулиці починається на \"М\" і нагадує про млин.",
         "hint": "Назва вулиці має щось спільне зі словом \"Mühle\".",
         "answer": ["müllerstrasse 54"]
@@ -41,7 +43,7 @@ QUEST = [
         "text": "«Початок шляху — у стінах, де відлунюють думки юності.»",
         "question": "Відгадай назву гімназії, де навчався Ейнштейн. Її ім’я вшановує монарха і класику.",
         "hint": "В назві цієї школи є слова, пов’язані з королем та латинською культурою.",
-        "answer": ["luitpold gymnasium"]
+        "answer": ["luitpold gymnasium"] 
     },
     {
         "title": "Точка 6 — Гуманітарна гармонія",
@@ -73,31 +75,54 @@ QUEST = [
     }
 ]
 
-user_progress = {}
+PROGRESS_FILE = 'user_progress.json'
+
+def load_progress():
+    if os.path.exists(PROGRESS_FILE):
+        with open(PROGRESS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+def save_progress(progress):
+    with open(PROGRESS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(progress, f)
+
+user_progress = load_progress()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_progress[update.effective_user.id] = 0
+    user_id = str(update.effective_user.id)
+    user_progress[user_id] = 0
+    save_progress(user_progress)
     await send_quest_point(update, context)
 
 async def send_quest_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.effective_user.id
+    user_id = str(update.effective_user.id)
     step = user_progress.get(user_id, 0)
     if step < len(QUEST):
         point = QUEST[step]
         message = f"{point['title']}\n\n{point['text']}\n\nЗавдання: {point['question']}\n\n📌 _Підказка:_ {point['hint']}"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode="Markdown")
     else:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="🎉 Вітаю! Ви пройшли весь квест 'Код Ейнштейна'.\n\nВи відкрили не просто відповіді — ви відчули дух пошуку, де кожна загадка — це крок до розуміння глибин світу і себе.\nЯк колись Ейнштейн казав, «Уява важливіша за знання», і саме уява веде нас за межі очевидного.\n\nНехай цей шлях надихає вас не боятись питати, шукати і відкривати нове — адже справжня мудрість починається там, де закінчується звичне.")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=(
+                "🎉 Вітаю! Ви пройшли весь квест 'Код Ейнштейна'.\n\n"
+                "Ви відкрили не просто відповіді — ви відчули дух пошуку, де кожна загадка — це крок до розуміння глибин світу і себе.\n"
+                "Як колись Ейнштейн казав, «Уява важливіша за знання», і саме уява веде нас за межі очевидного.\n\n"
+                "Нехай цей шлях надихає вас не боятись питати, шукати і відкривати нове — адже справжня мудрість починається там, де закінчується звичне."
+            )
+        )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.effective_user.id
+    user_id = str(update.effective_user.id)
     step = user_progress.get(user_id, 0)
     if step < len(QUEST):
         point = QUEST[step]
         user_answer = update.message.text.strip().lower()
         if user_answer in [ans.lower() for ans in point["answer"]]:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
-            user_progress[user_id] += 1
+            user_progress[user_id] = step + 1
+            save_progress(user_progress)
             await send_quest_point(update, context)
         else:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="❌ Невірно. Спробуй ще раз.")
@@ -109,4 +134,3 @@ if __name__ == '__main__':
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
     application.run_polling()
-
