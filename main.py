@@ -85,7 +85,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     # Вставте сюди свій токен
-    TOKEN = "ВАШ_ТЕЛЕГРАМ_ТОКЕН"
+    TOKEN = "7222439087:AAF4nAy9vsmr9TkIsVqojFnk8oevXJSKL-s"
 
     application = ApplicationBuilder().token(TOKEN).build()
 
