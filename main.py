@@ -1,76 +1,52 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# Питання, відповіді і підказки
 QUESTIONS = [
     {
-        "question": "Питання 1: Хто винайшов теорію відносності?",
-        "answer": "айнштайн",
-        "hint": "Це ім'я починається на 'А'."
+        "question": "Точка 1 — Початок\n\n«Все має початок — навіть нескінченність.»\n\nЗавдання: Назви вулицю, з якої починається наш маршрут, де і кава, і філософія зустрічаються під одним дахом.\n\n📌 _Підказка:_ Назва вулиці починається на М і має подвійне “л”.",
+        "answer": "мюллерштрассе"
     },
     {
-        "question": "Питання 2: Який колір неба?",
-        "answer": "блакитний",
-        "hint": "Це колір моря в ясний день."
+        "question": "Точка 2 — Оптика мислення\n\n«Світло — це не просто хвиля. Це ідея.»\n\nЗавдання: Знайди будівлю, де досліджували світло і теорії простору. Там працювали ті, хто бачив глибше за інших.\n\n📌 _Підказка:_ Це інститут, що має в назві слово «оптика».",
+        "answer": "інститут оптики"
     },
     {
-        "question": "Питання 3: Скільки планет у Сонячній системі?",
-        "answer": "вісім",
-        "hint": "Більше ніж сім, менше ніж дев'ять."
+        "question": "Точка 3 — Гімназія знань\n\n«Освіта — це те, що залишається, коли все вивчене забуто.»\n\nЗавдання: Назви тип школи, де вчився юний Ейнштейн, поруч із старими мурами.\n\n📌 _Підказка:_ Це гімназія, названа на честь поета або філософа.",
+        "answer": "людвігсгімназія"
     }
 ]
 
-# Словник, де ключ — user_id, а значення — індекс поточного питання
 user_states = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    user_states[user_id] = 0  # Починаємо з першого питання
-    await update.message.reply_text(
-        "Вітаю в квесті! Ось твоє перше питання:\n" + QUESTIONS[0]["question"]
-    )
+    user_states[user_id] = 0
+    await update.message.reply_text("🔐 Вітаю в квесті «Код Ейнштейна»!\n\n" + QUESTIONS[0]["question"])
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    text = update.message.text.strip().lower()
+
     if user_id not in user_states:
         await update.message.reply_text("Напишіть /start, щоб почати гру.")
         return
 
-    current_index = user_states[user_id]
-    user_answer = update.message.text.lower().strip()
-
-    correct_answer = QUESTIONS[current_index]["answer"]
-
-    if user_answer == correct_answer:
-        # Правильна відповідь
-        current_index += 1
-        if current_index == len(QUESTIONS):
-            await update.message.reply_text("Вітаю! Ви відповіли на всі питання!")
-            del user_states[user_id]  # Скидаємо стан користувача, бо гра завершена
+    idx = user_states[user_id]
+    if text == QUESTIONS[idx]["answer"]:
+        idx += 1
+        if idx == len(QUESTIONS):
+            await update.message.reply_text("🎉 Вітаю! Ви відповіли на всі завдання та розгадали Код Ейнштейна!")
+            del user_states[user_id]
         else:
-            user_states[user_id] = current_index
-            await update.message.reply_text(
-                f"Правильно! Ось наступне питання:\n{QUESTIONS[current_index]['question']}"
-            )
+            user_states[user_id] = idx
+            await update.message.reply_text("✅ Правильно!\n\n" + QUESTIONS[idx]["question"])
     else:
-        # Неправильна відповідь
-        await update.message.reply_text("Неправильно. Спробуйте ще раз або напишіть /pidkazka для підказки.")
-
-async def hint(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id not in user_states:
-        await update.message.reply_text("Напишіть /start, щоб почати гру.")
-        return
-
-    current_index = user_states[user_id]
-    hint_text = QUESTIONS[current_index]["hint"]
-    await update.message.reply_text(f"Підказка: {hint_text}")
+        await update.message.reply_text("❌ Неправильно. Спробуйте ще раз або прочитайте уважно підказку у завданні.")
 
 def main():
     application = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("pidkazka", hint))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_answer))
 
     application.run_polling()
