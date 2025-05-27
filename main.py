@@ -99,7 +99,8 @@ async def send_quest_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     step = user_progress.get(user_id, 0)
     if step < len(QUEST):
         point = QUEST[step]
-        message = f"{point['title']}\n\n{point['text']}\n\nЗавдання: {point['question']}\n\n📌 _Підказка:_ {point['hint']}"
+        hint = f"\n\n📌 _Підказка:_ {point['hint']}" if 'hint' in point else ""
+message = f"{point['title']}\n\n{point['text']}\n\nЗавдання: {point['question']}{hint}"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode="Markdown")
     else:
         await context.bot.send_message(
@@ -139,4 +140,4 @@ if __name__ == '__main__':
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
 
-    application.run_polling()
+   application.run_polling()
