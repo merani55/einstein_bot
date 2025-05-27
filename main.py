@@ -118,7 +118,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if step < len(QUEST):
         point = QUEST[step]
         user_answer = update.message.text.strip().lower()
-        if user_answer in [ans.lower() for ans in point["answer"]]:
+        if user_answer in [str(ans).strip().lower() for ans in point["answer"]]:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
             user_progress[user_id] = step + 1
             save_progress(user_progress)
