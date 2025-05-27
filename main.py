@@ -126,7 +126,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         logging.info(f"User answer: '{user_answer}' | Normalized: '{normalized_user_answer}' | Expected: {normalized_expected}")
 
-        if normalized_user_answer in normalized_expected or any(re.search(r'\b1884\b', user_answer) for ans in point["answer"]):
+        import re
+
+def check_answer(user_answer, expected_answers):
+    normalized_user_answer = ''.join(user_answer.lower().split())
+    normalized_expected = [''.join(ans.lower().split()) for ans in expected_answers]
+
+    if normalized_user_answer in normalized_expected:
+        return True
+
+    # Спеціальний випадок для цифр (як 1884) — перевірка з урахуванням чисел
+    for ans in expected_answers:
+        if re.search(r'\b' + re.escape(ans) + r'\b', user_answer, re.IGNORECASE):
+            return True
+    return False
             await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
             user_progress[user_id] = step + 1
             save_progress(user_progress)
