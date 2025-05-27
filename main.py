@@ -117,14 +117,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     step = user_progress.get(user_id, 0)
     if step < len(QUEST):
         point = QUEST[step]
-        user_answer = update.message.text.strip().lower()
-        if user_answer in [str(ans).strip().lower() for ans in point["answer"]]:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
-            user_progress[user_id] = step + 1
-            save_progress(user_progress)
-            await send_quest_point(update, context)
-        else:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="❌ Невірно. Спробуй ще раз.")
+        import re
+
+user_answer = update.message.text.strip().lower()
+normalized_user_answer = ''.join(user_answer.split())  # видаляє всі пробіли
+normalized_expected = [''.join(str(ans).strip().lower().split()) for ans in point["answer"]]
+
+logging.info(f"User answer: '{user_answer}' | Normalized: '{normalized_user_answer}' | Expected: {normalized_expected}")
+
+if normalized_user_answer in normalized_expected or any(re.search(r'\b1884\b', user_answer) for ans in point["answer"]):
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
+    user_progress[user_id] = step + 1
+    save_progress(user_progress)
+    await send_quest_point(update, context)
+else:
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="❌ Невірно. Спробуй ще раз.")
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token("7222439087:AAF4nAy9vsmr9TkIsVqojFnk8oevXJSKL-s").build()
