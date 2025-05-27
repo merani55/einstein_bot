@@ -132,17 +132,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await send_quest_point(update, context)
         else:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="❌ Невірно. Спробуй ще раз.")
-normalized_expected = [''.join(str(ans).strip().lower().split()) for ans in point["answer"]]
-
-logging.info(f"User answer: '{user_answer}' | Normalized: '{normalized_user_answer}' | Expected: {normalized_expected}")
-
-if normalized_user_answer in normalized_expected or any(re.search(r'\b1884\b', user_answer) for ans in point["answer"]):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
-    user_progress[user_id] = step + 1
-    save_progress(user_progress)
-    await send_quest_point(update, context)
-else:
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="❌ Невірно. Спробуй ще раз.")
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token("7222439087:AAF4nAy9vsmr9TkIsVqojFnk8oevXJSKL-s").build()
