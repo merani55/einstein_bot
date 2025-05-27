@@ -100,7 +100,7 @@ async def send_quest_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if step < len(QUEST):
         point = QUEST[step]
         hint = f"\n\n📌 _Підказка:_ {point['hint']}" if 'hint' in point else ""
-message = f"{point['title']}\n\n{point['text']}\n\nЗавдання: {point['question']}{hint}"
+        message = f"{point['title']}\n\n{point['text']}\n\nЗавдання: {point['question']}{hint}"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=message, parse_mode="Markdown")
     else:
         await context.bot.send_message(
