@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import unicodedata
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
@@ -29,7 +30,7 @@ QUEST = [
         "text": "«Будинок, у якому думки вперше набували форми...\"",
         "question": "Місце, де юний Ейнштейн жив зі своєю родиною, зберігає спокій і сьогодні. Його адреса має число, подільне на 3, 6 і 9. Назва вулиці починається на \"М\" і нагадує про млин.",
         "hint": "Назва вулиці має щось спільне зі словом \"Mühle\".",
-        "answer": ["müllerstrasse 54"]
+        "answer": ["müllerstrasse 54", "mullerstrasse 54", "muellerstrasse 54"]
     },
     {
         "title": "Точка 4 — Місце освіти",
@@ -93,6 +94,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id)
     user_progress[user_id] = 0
     save_progress(user_progress)
+    def normalize_text(text):
+    text = text.strip().lower()
+    text = unicodedata.normalize('NFKD', text)
+    return ''.join([c for c in text if not unicodedata.combining(c)])
     await send_quest_point(update, context)
 
 async def send_quest_point(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -118,8 +123,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     step = user_progress.get(user_id, 0)
     if step < len(QUEST):
         point = QUEST[step]
-        user_answer = update.message.text.strip().lower()
-        if user_answer in [ans.lower() for ans in point["answer"]]:
+        user_answer = normalize_text(update.message.text)
+correct_answers = [normalize_text(ans) for ans in point["answer"]]
+if user_answer in correct_answers:
             await context.bot.send_message(chat_id=update.effective_chat.id, text="✅ Вірно!")
             user_progress[user_id] = step + 1
             save_progress(user_progress)
